@@ -9,7 +9,7 @@ from urllib.parse import urlencode
 from bs4 import BeautifulSoup
 from django.db.transaction import atomic
 
-from academic_helper.models import Course, School, Faculty
+from academic_helper.models import Course, Department, Faculty
 from academic_helper.models.course_occurrence import (
     CourseOccurrence,
     Semester,
@@ -176,7 +176,7 @@ class ShnatonParser:
         raw_faculty = raw_data["faculty"].strip()
         raw_school = raw_data["school"].strip()
         faculty = Faculty.objects.get_or_create(name=raw_faculty)[0]
-        school = School.objects.get_or_create(name=raw_school, faculty=faculty)[0]
+        school = Department.objects.get_or_create(name=raw_school, faculty=faculty)[0]
 
         course_number = raw_data["id"]
         course_name = raw_data["name"].replace("_", "")

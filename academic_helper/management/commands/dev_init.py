@@ -1,43 +1,56 @@
 from django.core.management import BaseCommand
 
 from academic_helper.logic.shnaton_parser import ShnatonParser
-from academic_helper.models import Course, StudyBlock, StudyPlan
+from academic_helper.models import Course, StudyBlock, DegreeProgram
 from academic_helper.utils.logger import log
 
 courses_to_fetch = [94640, 94625, 67504, 67101, 67392, 67829]  # Intro  # Crypto  # Impr
+
+# blocks info - name, min_credits, [course_num1, ...]
+unparsed_blocks = [
+        ("Compulsory CS", 15, [67101, 67109, 67125]),
+        ("Compulsory Math", 20, [80131, 80133, 80134]),
+        ("Elective", 4, [67392, 67829])
+    ]
 
 
 def fetch_courses():
     log.info("Fetching courses")
     for course_number in courses_to_fetch:
         ShnatonParser.fetch_course(course_number)
+    for block in unparsed_blocks:
+        for course in block[2]:
+            ShnatonParser.fetch_course(course)
 
 
 def create_blocks():
     log.info("Creating blocks")
-    intro = Course.objects.get(course_number=67101)
-    crypto = Course.objects.get(course_number=67392)
-    impr = Course.objects.get(course_number=67829)
-    must_cs_block = StudyBlock.objects.get_or_create(name="Must CS", min_credits=32)[0]
-    must_cs_block.courses.add(intro)
-    must_cs_block.save()
-    cs_elective_block = StudyBlock.objects.get_or_create(name="CS Must Elective", min_credits=16)[0]
-    cs_elective_block.courses.add(crypto)
-    cs_elective_block.courses.add(impr)
-    cs_elective_block.save()
-    return cs_elective_block, must_cs_block
+    study_blocks = []
+    for unparsed_block in unparsed_blocks:
+        # extract info
+        name, min_credits, course_nums = unparsed_block
+        # create block
+        block = StudyBlock.objects.get_or_create(name=name, min_credits=min_credits)[0]
+        # add courses to block
+        for course_num in course_nums:
+            course = Course.objects.get(course_number=course_num)
+            block.courses.add(course)
+        # add block to study blocks
+        block.save()
+        study_blocks.append(block)
+    return study_blocks
 
 
-def create_study_plans(cs_elective_block, must_cs_block):
-    log.info("Creating plans")
-    cs_plan = StudyPlan.objects.get_or_create(name="CS Expanded Single Major", credits=134)[0]
-    cs_plan.blocks.add(must_cs_block)
-    cs_plan.blocks.add(cs_elective_block)
+def create_degree_program(blocks):
+    log.info("Creating program")
+    cs_plan = DegreeProgram.objects.get_or_create(name="Mock CS", code=1993, credits=39)[0]
+    for block in blocks:
+        cs_plan.blocks.add(block)
     cs_plan.save()
 
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
         fetch_courses()
-        cs_elective_block, must_cs_block = create_blocks()
-        create_study_plans(cs_elective_block, must_cs_block)
+        blocks = create_blocks()
+        create_degree_program(blocks)

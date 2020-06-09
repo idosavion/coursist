@@ -27,11 +27,11 @@ class CompletedCourse(Base):
         return f"{self.user} - {self.course}"
 
 
-class StudyPlan(Base):
+class DegreeProgram(Base):
     name: str = models.CharField(max_length=50)
+    code: int = models.IntegerField()
     blocks = models.ManyToManyField(StudyBlock)
     credits: int = models.IntegerField()
-    is_public: bool = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.id} - {self.name}"

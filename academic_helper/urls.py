@@ -5,6 +5,7 @@ from academic_helper.views.basic import index
 from academic_helper.views.courses import CoursesView, CourseDetailsView
 from academic_helper.views.other import AjaxView, AboutView, LoginView, SignupView
 from academic_helper.views.schedule import ScheduleView
+from academic_helper.views.degree_program import AllDegreePrograms
 
 
 def healthy(request):
@@ -21,4 +22,5 @@ urlpatterns = [
     path("login/", LoginView.as_view(), name="login"),
     path("signup/", SignupView.as_view(), name="signup"),
     path("schedule/", ScheduleView.as_view(), name="schedule"),
+    path("degree_program/", AllDegreePrograms.as_view(), name='degree-program')
 ]
